@@ -50,13 +50,11 @@ def check_api(key, request):
 
 def process_api_data(data):
     thepath = get_ssl_cert()
-    user_name = os.getenv('UsernameFromKeyVault')
-    password = os.getenv('PasswordFromKeyVault')
-    football_api_key = os.getenv('football-api-key')
-    mysql_azure_host = os.getenv('mysql-azure-host')
-    mysql_azure_user = os.getenv('mysql-azure-user')
-    mysql_azure_password = os.getenv('mysql-azure-password')
-    mysql_azure_db = os.getenv('mysql-azure-db')
+    football_api_key = os.getenv('footballapikey')
+    mysql_azure_host = os.getenv('mysqlazurehost')
+    mysql_azure_user = os.getenv('mysqlazureuser')
+    mysql_azure_password = os.getenv('mysqlazurepassword')
+    mysql_azure_db = os.getenv('mysqlazuredb')
     
     jsondata = json.loads(check_api(football_api_key, data))
     json2 = str(json.dumps(jsondata))
