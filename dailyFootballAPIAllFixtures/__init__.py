@@ -179,7 +179,7 @@ def process_api_data(data):
     sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
     now = datetime.now()
     date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
-    val = ('PARSED ' + data, date_time_now_format, parsed_json_i_want)
+    val = ('PARSED '+ fixtures_league + data, date_time_now_format, parsed_json_i_want)
     mycursor.execute(sql, val)
     mycursor.close()
     mydb.commit()
