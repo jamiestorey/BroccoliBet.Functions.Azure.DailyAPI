@@ -30,6 +30,11 @@ def get_ssl_cert():
     return str(current_path / 'DigiCertGlobalRootCA.crt.pem')
 
 
+
+def get_folder(filename):
+    current_path = pathlib.Path(__file__).parent.parent
+    return str(current_path / filename)
+
 def check_api(key, request):
     connection = http.client.HTTPSConnection("v3.football.api-sports.io")
 
@@ -87,7 +92,7 @@ def process_api_data(data):
     fixtures_league = read_api['parameters']['league']
 
     json_i_want = {}
-    json_i_want['fixtures'] = []
+    json_i_want['FIXTURES'] = []
 
     for index in range(length):
         if (read_api["response"][index]["goals"]["home"] == None):
@@ -147,7 +152,7 @@ def process_api_data(data):
             fixture_team_home_is_winner = 'DRAW'
             fixture_team_away_is_winner = 'DRAW'
 
-        json_i_want['fixtures'].append({
+        json_i_want['FIXTURES'].append({"FIXTURE":{
             'fixture_id': fixture_id,
             'fixture_date': fixture_date,
             'fixture_time': fixture_time,
@@ -171,9 +176,15 @@ def process_api_data(data):
             # 'f_score_et_away': f_score_et_away,
             # 'f_score_pen_home': f_score_pen_home,
             # 'f_score_pen_away': f_score_pen_away,
-        })
+        }})
 
     parsed_json_i_want = json.dumps(json_i_want)
+
+    output_filename = "latest_" + str(fixture_league_id) + ".json"
+    output_folder = get_folder(output_filename)
+    with open(output_folder , 'w') as writeJson:
+        json.dump(json_i_want, writeJson, indent=4)
+
     sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
     now = datetime.now()
     date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
