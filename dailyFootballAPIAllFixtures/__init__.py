@@ -21,8 +21,8 @@ from datetime import datetime
 import mysql.connector
 import pathlib
 from azure.storage.blob import ContainerClient
-
 import azure.functions as func
+import pymongo
 
 
 def get_ssl_cert():
@@ -63,6 +63,13 @@ def process_api_data(data):
     mysql_azure_db = os.getenv('mysqlazuredb')
     blobcontainer = os.getenv('blobcontainer')
     blobconnection = os.getenv('blobconnection')
+    mongoconnection = os.getenv('mongoconnection')
+
+    
+    
+
+   
+
     
     jsondata = json.loads(check_api(football_api_key, data))
     json2 = str(json.dumps(jsondata))
@@ -94,7 +101,7 @@ def process_api_data(data):
     fixtures_season = read_api['parameters']['season']
     fixtures_league = read_api['parameters']['league']
 
-    json_i_want = {}
+    json_i_want = {"name":"placeholder", "date": date_time_now_format}
     json_i_want['FIXTURES'] = []
 
     for index in range(length):
@@ -193,6 +200,16 @@ def process_api_data(data):
     blob_client = container_client.get_blob_client(output_filename)
     with open(get_folder(output_filename), "rb") as data_file:
         blob_client.upload_blob(data_file, overwrite=True)
+    
+    os.remove(get_folder(output_filename))
+    
+    mongo_client = pymongo.MongoClient(mongoconnection)
+    mongo_db = mongo_client["sportsapi"]
+    latest_string = "latest_" + str(fixture_league_id)
+    mongo_collection = mongo_db[latest_string]
+    
+    #mongo_data_test = parsed_json_i_want
+    mongo_collection.replace_one({"name":"placeholder"}, json_i_want)
     
     sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
     now = datetime.now()
