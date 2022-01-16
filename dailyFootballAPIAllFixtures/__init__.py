@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 import mysql.connector
 import pathlib
+from azure.storage.blob import ContainerClient
 
 import azure.functions as func
 
@@ -60,6 +61,8 @@ def process_api_data(data):
     mysql_azure_user = os.getenv('mysqlazureuser')
     mysql_azure_password = os.getenv('mysqlazurepassword')
     mysql_azure_db = os.getenv('mysqlazuredb')
+    blobcontainer = os.getenv('blobcontainer')
+    blobconnection = os.getenv('blobconnection')
     
     jsondata = json.loads(check_api(football_api_key, data))
     json2 = str(json.dumps(jsondata))
@@ -185,6 +188,12 @@ def process_api_data(data):
     with open(output_folder , 'w') as writeJson:
         json.dump(json_i_want, writeJson, indent=4)
 
+    
+    container_client = ContainerClient.from_connection_string(blobconnection, blobcontainer)
+    blob_client = container_client.get_blob_client(output_filename)
+    with open(get_folder(output_filename), "rb") as data_file:
+        blob_client.upload_blob(data_file, overwrite=True)
+    
     sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
     now = datetime.now()
     date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
