@@ -201,7 +201,8 @@ def process_api_data(data):
     with open(get_folder(output_filename), "rb") as data_file:
         blob_client.upload_blob(data_file, overwrite=True)
     
-    os.remove(get_folder(output_filename))
+    if os.path.exists(get_folder(output_filename)):
+        os.remove(get_folder(output_filename))
     
     mongo_client = pymongo.MongoClient(mongoconnection)
     mongo_db = mongo_client["sportsapi"]
