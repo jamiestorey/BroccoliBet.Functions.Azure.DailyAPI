@@ -191,18 +191,15 @@ def process_api_data(data):
     parsed_json_i_want = json.dumps(json_i_want)
 
     output_filename = "latest_" + str(fixture_league_id) + ".json"
-    output_folder = get_folder(output_filename)
-    with open(output_folder , 'w') as writeJson:
-        json.dump(json_i_want, writeJson, indent=4)
+    # output_folder = get_folder(output_filename)
+    # with open(output_folder , 'w') as writeJson:
+    #     json.dump(json_i_want, writeJson, indent=4)
 
     
     container_client = ContainerClient.from_connection_string(blobconnection, blobcontainer)
     blob_client = container_client.get_blob_client(output_filename)
-    with open(get_folder(output_filename), "rb") as data_file:
-        blob_client.upload_blob(data_file, overwrite=True)
     
-    if os.path.exists(get_folder(output_filename)):
-        os.remove(get_folder(output_filename))
+    blob_client.upload_blob(parsed_json_i_want, overwrite=True)
     
     mongo_client = pymongo.MongoClient(mongoconnection)
     mongo_db = mongo_client["sportsapi"]
@@ -220,6 +217,10 @@ def process_api_data(data):
     mycursor.close()
     mydb.commit()
     mydb.close()
+
+    #can't delete files on functions server
+    # if os.path.exists(get_folder(output_filename)):
+    #     os.remove(get_folder(output_filename))
 
 def main(mytimer: func.TimerRequest):
     #utc_timestamp = datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
