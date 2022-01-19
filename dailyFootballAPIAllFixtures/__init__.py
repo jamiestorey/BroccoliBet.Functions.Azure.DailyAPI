@@ -65,12 +65,6 @@ def process_api_data(data):
     blobconnection = os.getenv('blobconnection')
     mongoconnection = os.getenv('mongoconnection')
 
-    
-    
-
-   
-
-    
     jsondata = json.loads(check_api(football_api_key, data))
     json2 = str(json.dumps(jsondata))
 
@@ -126,7 +120,6 @@ def process_api_data(data):
             fixture_team_away_is_winner = read_api["response"][index]["teams"]["away"]["winner"]
 
         original_date = read_api["response"][index]["fixture"]["date"]
-        # print(f"original_date = {original_date}")
         date_time_obj = datetime.strptime(original_date, "%Y-%m-%dT%H:%M:%S%z")
         fixture_date_formatted = date_time_obj.strftime("%d/%m/%Y")
         fixture_time_formatted = date_time_obj.strftime("%H:%M:%S")
@@ -146,9 +139,7 @@ def process_api_data(data):
         # fixture_team_away_is_winner = read_api["response"][index]["teams"]["away"]["winner"]
 
         # fixture_goals_home = read_api["response"][index]["goals"]["home"]
-        # fixture_goals_home = is_home_goals_null
         # fixture_goals_away = read_api["response"][index]["goals"]["away"]
-        # fixture_goals_away = is_away_goals_null
         # f_score_ht_home = read_api["response"][index]["score"]['halftime']["home"]
         # f_score_ht_away = read_api["response"][index]["score"]['halftime']["away"]
         # f_score_ft_home = read_api["response"][index]["score"]['fulltime']["home"]
@@ -162,7 +153,8 @@ def process_api_data(data):
             fixture_team_home_is_winner = 'DRAW'
             fixture_team_away_is_winner = 'DRAW'
 
-        json_i_want['FIXTURES'].append({"FIXTURE":{
+        json_i_want['FIXTURES'].append(
+            {"FIXTURE":{
             'fixture_id': fixture_id,
             'fixture_date': fixture_date,
             'fixture_time': fixture_time,
@@ -172,8 +164,8 @@ def process_api_data(data):
             'fixtures_round': fixtures_round,
             'fixture_team_home_id': fixture_team_home_id,
             'fixture_team_away_id': fixture_team_away_id,
-            # 'fixture_team_home_name': fixture_team_home_name,
-            # 'fixture_team_away_name': fixture_team_away_name,
+            'fixture_team_home_name': fixture_team_home_name,
+            'fixture_team_away_name': fixture_team_away_name,
             'fixture_goals_home': fixture_goals_home,
             'fixture_goals_away': fixture_goals_away,
             'fixture_team_home_is_winner': fixture_team_home_is_winner,
@@ -186,7 +178,8 @@ def process_api_data(data):
             # 'f_score_et_away': f_score_et_away,
             # 'f_score_pen_home': f_score_pen_home,
             # 'f_score_pen_away': f_score_pen_away,
-        }})
+        }
+        })
 
     parsed_json_i_want = json.dumps(json_i_want)
 
