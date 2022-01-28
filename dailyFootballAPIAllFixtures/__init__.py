@@ -130,7 +130,7 @@ def process_api_data(data):
         # fixture_timezone = read_api['response'][index]['fixture']['timezone']
         fixture_status = read_api["response"][index]["fixture"]["status"]["long"]
         fixture_league_id = read_api["response"][index]["league"]["id"]
-        fixtures_round = read_api['response'][index]['league']['round']
+        fixture_round = read_api['response'][index]['league']['round']
         fixture_team_home_id = read_api["response"][index]["teams"]["home"]["id"]
         fixture_team_away_id = read_api["response"][index]["teams"]["away"]["id"]
         fixture_team_home_name = read_api["response"][index]["teams"]["home"]["name"]
@@ -161,7 +161,7 @@ def process_api_data(data):
             # 'fixture_timezone': fixture_timezone,
             'fixture_status': fixture_status,
             'fixture_league_id': fixture_league_id,
-            'fixtures_round': fixtures_round,
+            'fixture_round': fixture_round,
             'fixture_team_home_id': fixture_team_home_id,
             'fixture_team_away_id': fixture_team_away_id,
             'fixture_team_home_name': fixture_team_home_name,
