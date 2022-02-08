@@ -25,6 +25,15 @@ import azure.functions as func
 import pymongo
 
 
+# https://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable/
+class DatetimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        try:
+            return super().default(obj)
+        except TypeError:
+            return str(obj)
+
+
 def get_ssl_cert():
     current_path = pathlib.Path(__file__).parent.parent
     print(current_path)
@@ -55,12 +64,12 @@ def check_api(key, request):
 
 
 def process_api_data(data):
-    thepath = get_ssl_cert()
+    # thepath = get_ssl_cert()
     football_api_key = os.getenv('footballapikey')
-    mysql_azure_host = os.getenv('mysqlazurehost')
-    mysql_azure_user = os.getenv('mysqlazureuser')
-    mysql_azure_password = os.getenv('mysqlazurepassword')
-    mysql_azure_db = os.getenv('mysqlazuredb')
+    # mysql_azure_host = os.getenv('mysqlazurehost')
+    # mysql_azure_user = os.getenv('mysqlazureuser')
+    # mysql_azure_password = os.getenv('mysqlazurepassword')
+    # mysql_azure_db = os.getenv('mysqlazuredb')
     blobcontainer = os.getenv('blobcontainer')
     blobconnection = os.getenv('blobconnection')
     mongoconnection = os.getenv('mongoconnection')
@@ -68,24 +77,26 @@ def process_api_data(data):
     jsondata = json.loads(check_api(football_api_key, data))
     json2 = str(json.dumps(jsondata))
 
-    mydb = mysql.connector.connect(
-        host=mysql_azure_host,
-        user=mysql_azure_user,
-        password=mysql_azure_password,
-        database=mysql_azure_db,
-        port=3306,
-        ssl_verify_cert=True,
-        ssl_ca=thepath,
-        use_pure=True
-    )
+    # mydb = mysql.connector.connect(
+    #     host=mysql_azure_host,
+    #     user=mysql_azure_user,
+    #     password=mysql_azure_password,
+    #     database=mysql_azure_db,
+    #     port=3306,
+    #     ssl_verify_cert=True,
+    #     ssl_ca=thepath,
+    #     use_pure=True
+    # )
 
-    mycursor = mydb.cursor()
+    # mycursor = mydb.cursor()
 
-    sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
     now = datetime.now()
     date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
-    val = (data, date_time_now_format, json2)
-    mycursor.execute(sql, val)
+
+    # todo - remove sql stuff
+    # val = (data, date_time_now_format, json2)
+    # sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
+    # mycursor.execute(sql, val)
 
 
     # PROCESS ONLY DATA I WANT
@@ -154,36 +165,37 @@ def process_api_data(data):
             fixture_team_away_is_winner = 'DRAW'
 
         json_i_want['FIXTURES'].append(
-            {"FIXTURE":{
-            'fixture_id': fixture_id,
-            'fixture_date': fixture_date,
-            'fixture_time': fixture_time,
-            # 'fixture_timezone': fixture_timezone,
-            'fixture_status': fixture_status,
-            'fixture_league_id': fixture_league_id,
-            'fixture_round': fixture_round,
-            'fixture_team_home_id': fixture_team_home_id,
-            'fixture_team_away_id': fixture_team_away_id,
-            'fixture_team_home_name': fixture_team_home_name,
-            'fixture_team_away_name': fixture_team_away_name,
-            'fixture_goals_home': fixture_goals_home,
-            'fixture_goals_away': fixture_goals_away,
-            'fixture_team_home_is_winner': fixture_team_home_is_winner,
-            'fixture_team_away_is_winner': fixture_team_away_is_winner,
-            # 'f_score_ht_home': f_score_ht_home,
-            # 'f_score_ht_away': f_score_ht_away,
-            # 'f_score_ft_home': f_score_ft_home,
-            # 'f_score_ft_away': f_score_ft_away,
-            # 'f_score_et_home': f_score_et_home,
-            # 'f_score_et_away': f_score_et_away,
-            # 'f_score_pen_home': f_score_pen_home,
-            # 'f_score_pen_away': f_score_pen_away,
-        }
-        })
+            {   '_id': fixture_id,
+                'fixture_id': fixture_id,
+                'fixture_utc_date': date_time_obj,
+                'fixture_date': fixture_date,
+                'fixture_time': fixture_time,
+                # 'fixture_timezone': fixture_timezone,
+                'fixture_status': fixture_status,
+                'fixture_league_id': fixture_league_id,
+                'fixture_round': fixture_round,
+                'fixture_team_home_id': fixture_team_home_id,
+                'fixture_team_away_id': fixture_team_away_id,
+                'fixture_team_home_name': fixture_team_home_name,
+                'fixture_team_away_name': fixture_team_away_name,
+                'fixture_goals_home': fixture_goals_home,
+                'fixture_goals_away': fixture_goals_away,
+                'fixture_team_home_is_winner': fixture_team_home_is_winner,
+                'fixture_team_away_is_winner': fixture_team_away_is_winner,
+                # 'f_score_ht_home': f_score_ht_home,
+                # 'f_score_ht_away': f_score_ht_away,
+                # 'f_score_ft_home': f_score_ft_home,
+                # 'f_score_ft_away': f_score_ft_away,
+                # 'f_score_et_home': f_score_et_home,
+                # 'f_score_et_away': f_score_et_away,
+                # 'f_score_pen_home': f_score_pen_home,
+                # 'f_score_pen_away': f_score_pen_away,
+            })
 
-    parsed_json_i_want = json.dumps(json_i_want)
+    # parsed_json_i_want = json.dumps(json_i_want)
+    parsed_json_i_want = json.dumps(json_i_want, cls=DatetimeEncoder)
 
-    output_filename = "latest_" + str(fixture_league_id) + ".json"
+    output_filename = "latest__" + str(fixture_league_id) + ".json"
     # output_folder = get_folder(output_filename)
     # with open(output_folder , 'w') as writeJson:
     #     json.dump(json_i_want, writeJson, indent=4)
@@ -194,22 +206,32 @@ def process_api_data(data):
     
     blob_client.upload_blob(parsed_json_i_want, overwrite=True)
     
+    # mongo_client = pymongo.MongoClient(mongoconnection)
+    # mongo_db = mongo_client["sportsapi"]
+    # latest_string = "latest__" + str(fixture_league_id)
+    # mongo_collection = mongo_db[latest_string]
+
     mongo_client = pymongo.MongoClient(mongoconnection)
-    mongo_db = mongo_client["sportsapi"]
-    latest_string = "latest_" + str(fixture_league_id)
+    latest_string = "latest__" + str(fixture_league_id)
+    mongo_db = mongo_client["sportsapi__testing"]
+    mongo_db = mongo_db.drop_collection(mongo_db[latest_string])
+    mongo_db = mongo_client["sportsapi__testing"]
     mongo_collection = mongo_db[latest_string]
+
+    mongo_collection.insert_many(json_i_want['FIXTURES'])
     
     #mongo_data_test = parsed_json_i_want
-    mongo_collection.replace_one({"name":"placeholder"}, json_i_want)
+    # mongo_collection.replace_one({"name":"placeholder"}, json_i_want)
+    # now = datetime.now()
+    # date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
     
-    sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
-    now = datetime.now()
-    date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
-    val = ('PARSED '+ fixtures_league + data, date_time_now_format, parsed_json_i_want)
-    mycursor.execute(sql, val)
-    mycursor.close()
-    mydb.commit()
-    mydb.close()
+    #todo remove sql stuff
+    # sql = "insert into my_table( item_name, item_description, example) VALUES (%s, %s, %s)"
+    # val = ('PARSED '+ fixtures_league + data, date_time_now_format, parsed_json_i_want)
+    # mycursor.execute(sql, val)
+    # mycursor.close()
+    # mydb.commit()
+    # mydb.close()
 
     #can't delete files on functions server
     # if os.path.exists(get_folder(output_filename)):
@@ -217,10 +239,11 @@ def process_api_data(data):
 
 def main(mytimer: func.TimerRequest):
     #utc_timestamp = datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
-    GETTT = "/fixtures?league=41&season=2021&timezone=Europe/london"
+    GETTT = "/fixtures?league=41&season=2021"
+    # GETTT = "/fixtures?league=41&season=2021&timezone=Europe/london"
     process_api_data(GETTT)
 
-    GETTT = "/fixtures?league=39&season=2021&timezone=Europe/london"
+    GETTT = "/fixtures?league=39&season=2021"
 
     process_api_data(GETTT)
 
