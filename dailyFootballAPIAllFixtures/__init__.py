@@ -73,6 +73,7 @@ def process_api_data(data):
     blobcontainer = os.getenv('blobcontainer')
     blobconnection = os.getenv('blobconnection')
     mongoconnection = os.getenv('mongoconnection')
+    mongoclient = os.getenv('mongodbclient')
 
     jsondata = json.loads(check_api(football_api_key, data))
     json2 = str(json.dumps(jsondata))
@@ -213,9 +214,9 @@ def process_api_data(data):
 
     mongo_client = pymongo.MongoClient(mongoconnection)
     latest_string = "latest__" + str(fixture_league_id)
-    mongo_db = mongo_client["sportsapi__testing"]
+    mongo_db = mongo_client[mongoclient]
     mongo_db = mongo_db.drop_collection(mongo_db[latest_string])
-    mongo_db = mongo_client["sportsapi__testing"]
+    mongo_db = mongo_client[mongoclient]
     mongo_collection = mongo_db[latest_string]
 
     mongo_collection.insert_many(json_i_want['FIXTURES'])
