@@ -129,16 +129,27 @@ def process_api_data(data):
     
     blob_client.upload_blob(parsed_json_i_want, overwrite=True)
     
+    # mongo_client = pymongo.MongoClient(mongoconnection)
+    # latest_string = "latest__" + str(fixture_league_id)
+    # mongo_db = mongo_client[mongoclient]
+    # mongo_db = mongo_db.drop_collection(mongo_db[latest_string])
+    # mongo_db = mongo_client[mongoclient]
+    # mongo_collection = mongo_db[latest_string]
+
     mongo_client = pymongo.MongoClient(mongoconnection)
-    latest_string = "latest__" + str(fixture_league_id)
+    # latest_string = "latest__" + str(fixture_league_id)
     mongo_db = mongo_client[mongoclient]
-    mongo_db = mongo_db.drop_collection(mongo_db[latest_string])
-    mongo_db = mongo_client[mongoclient]
-    mongo_collection = mongo_db[latest_string]
+    mongo_collection = mongo_db["fixtures"]
 
     mongo_collection.insert_many(json_i_want['FIXTURES'])
 
 def main(mytimer: func.TimerRequest):
+    mongoconnection = os.getenv('mongoconnection')
+    mongoclient = os.getenv('mongodbclient')
+    mongo_client = pymongo.MongoClient(mongoconnection)
+    mongo_db = mongo_client[mongoclient]
+    mongo_db = mongo_db.drop_collection("fixtures")
+
     GETTT = "/fixtures?league=41&season=2021"
     process_api_data(GETTT)
 
