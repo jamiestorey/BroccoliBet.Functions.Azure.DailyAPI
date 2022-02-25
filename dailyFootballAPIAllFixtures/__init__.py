@@ -2,6 +2,7 @@ import logging
 import os
 import http.client
 import json
+import bson
 from datetime import datetime
 import pathlib
 from azure.storage.blob import ContainerClient
@@ -101,7 +102,7 @@ def process_api_data(data):
             fixture_team_away_is_winner = 'DRAW'
 
         json_i_want['FIXTURES'].append(
-            {   '_id': fixture_id,
+            {   '_id': bson.objectid.ObjectId(),
                 'fixture_id': fixture_id,
                 'fixture_utc_date': date_time_obj,
                 'fixture_date': fixture_date,
