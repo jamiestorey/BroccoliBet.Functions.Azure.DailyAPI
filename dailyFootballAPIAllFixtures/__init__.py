@@ -91,6 +91,7 @@ def process_api_data(data):
         fixture_time = fixture_time_formatted
         fixture_status = read_api["response"][index]["fixture"]["status"]["long"]
         fixture_league_id = read_api["response"][index]["league"]["id"]
+        fixture_season = read_api["response"][index]["league"]["season"]
         fixture_round = read_api['response'][index]['league']['round']
         fixture_team_home_id = read_api["response"][index]["teams"]["home"]["id"]
         fixture_team_away_id = read_api["response"][index]["teams"]["away"]["id"]
@@ -110,6 +111,7 @@ def process_api_data(data):
                 # 'fixture_timezone': fixture_timezone,
                 'fixture_status': fixture_status,
                 'fixture_league_id': fixture_league_id,
+                "fixture_season": fixture_season,
                 'fixture_round': fixture_round,
                 'fixture_team_home_id': fixture_team_home_id,
                 'fixture_team_away_id': fixture_team_away_id,
