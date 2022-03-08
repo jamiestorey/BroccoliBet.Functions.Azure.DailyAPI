@@ -63,12 +63,12 @@ def process_api_data(data):
 
     for index in range(length):
         if (read_api["response"][index]["goals"]["home"] == None):
-            fixture_goals_home = -111
+            fixture_goals_home = -1
         else:
             fixture_goals_home = read_api["response"][index]["goals"]["home"]
 
         if (read_api["response"][index]["goals"]["away"] == None):
-            fixture_goals_away = -222
+            fixture_goals_away = -2
         else:
             fixture_goals_away = read_api["response"][index]["goals"]["away"]
 
