@@ -17,6 +17,16 @@ class DatetimeEncoder(json.JSONEncoder):
         except TypeError:
             return str(obj)
 
+# https://stackoverflow.com/a/55080038
+def object_id_from_int(n):
+    s = str(n)
+    s = '0' * (24 - len(s)) + s
+    return bson.ObjectId(s)
+
+# https://stackoverflow.com/a/55080038
+def int_from_object_id(obj):
+    return int(str(obj))
+
 
 def get_folder(filename):
     current_path = pathlib.Path(__file__).parent.parent
@@ -102,8 +112,15 @@ def process_api_data(data):
             fixture_team_home_is_winner = 'DRAW'
             fixture_team_away_is_winner = 'DRAW'
 
+        
+        # https://stackoverflow.com/a/55080038
+        
+        fixutre_id_obj = object_id_from_int(fixture_id)
+
         json_i_want['FIXTURES'].append(
-            {   '_id': bson.objectid.ObjectId(),
+            # Example objectid:
+            # 000000000000000000715870
+            {   '_id': bson.objectid.ObjectId(fixutre_id_obj),
                 'fixture_id': fixture_id,
                 'fixture_utc_date': date_time_obj,
                 'fixture_date': fixture_date,
