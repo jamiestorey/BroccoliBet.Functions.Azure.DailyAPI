@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 import http.client
 import json
 import bson
@@ -8,6 +9,11 @@ import pathlib
 from azure.storage.blob import ContainerClient
 import azure.functions as func
 import pymongo
+
+global json_i_want
+global fixtures_list
+global all_fixtures
+global number_of_erros
 
 # https://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable/
 class DatetimeEncoder(json.JSONEncoder):
@@ -49,27 +55,27 @@ def check_api(key, request):
 
 
 def process_api_data(data):
+    json_i_want = {}
+    json_i_want["FIXTURES"] = []
     football_api_key = os.getenv('footballapikey')
-    blobcontainer = os.getenv('blobcontainer')
-    blobconnection = os.getenv('blobconnection')
+    
     mongoconnection = os.getenv('mongoconnection')
     mongoclient = os.getenv('mongodbclient')
 
-    jsondata = json.loads(check_api(football_api_key, data))
-    json2 = str(json.dumps(jsondata))
+    read_api = json.loads(check_api(football_api_key, data))
+    json2 = str(json.dumps(read_api))
 
     now = datetime.now()
     date_time_now_format = now.strftime("%d/%m/%Y %H:%M:%S")
 
     # PROCESS ONLY DATA I WANT
-    read_api = jsondata
 
     length = len(read_api['response'])
     fixtures_season = read_api['parameters']['season']
     fixtures_league = read_api['parameters']['league']
 
-    json_i_want = {"name":"placeholder", "date": date_time_now_format}
-    json_i_want['FIXTURES'] = []
+    
+    
 
     for index in range(length):
         if (read_api["response"][index]["goals"]["home"] == None):
@@ -114,9 +120,8 @@ def process_api_data(data):
 
         
         # https://stackoverflow.com/a/55080038
-        
         fixutre_id_obj = object_id_from_int(fixture_id)
-
+        
         json_i_want['FIXTURES'].append(
             # Example objectid:
             # 000000000000000000715870
@@ -140,15 +145,7 @@ def process_api_data(data):
                 'fixture_team_away_is_winner': fixture_team_away_is_winner,
             })
 
-    parsed_json_i_want = json.dumps(json_i_want, cls=DatetimeEncoder)
-
-    output_filename = "latest__" + str(fixture_league_id) + ".json"
-    
-    container_client = ContainerClient.from_connection_string(blobconnection, blobcontainer)
-    blob_client = container_client.get_blob_client(output_filename)
-    
-    blob_client.upload_blob(parsed_json_i_want, overwrite=True)
-    
+    return json_i_want['FIXTURES']
     # mongo_client = pymongo.MongoClient(mongoconnection)
     # latest_string = "latest__" + str(fixture_league_id)
     # mongo_db = mongo_client[mongoclient]
@@ -156,23 +153,66 @@ def process_api_data(data):
     # mongo_db = mongo_client[mongoclient]
     # mongo_collection = mongo_db[latest_string]
 
-    mongo_client = pymongo.MongoClient(mongoconnection)
-    # latest_string = "latest__" + str(fixture_league_id)
-    mongo_db = mongo_client[mongoclient]
-    mongo_collection = mongo_db["fixtures"]
+    # mongo_client = pymongo.MongoClient(mongoconnection)
+    # # latest_string = "latest__" + str(fixture_league_id)
+    # mongo_db = mongo_client[mongoclient]
+    # mongo_collection = mongo_db["fixtures"]
 
-    mongo_collection.insert_many(json_i_want['FIXTURES'])
+    
 
 def main(mytimer: func.TimerRequest):
+    number_of_errors = 0
+    blobcontainer = os.getenv('blobcontainer')
+    blobconnection = os.getenv('blobconnection')
     mongoconnection = os.getenv('mongoconnection')
     mongoclient = os.getenv('mongodbclient')
     mongo_client = pymongo.MongoClient(mongoconnection)
     mongo_db = mongo_client[mongoclient]
     mongo_db = mongo_db.drop_collection("fixtures")
+    mongo_db = mongo_client[mongoclient]
+    mongo_collection = mongo_db["fixtures"]
 
-    GETTT = "/fixtures?league=41&season=2021"
-    process_api_data(GETTT)
+    # json_i_want = {}
+    # json_i_want["FIXTURES"] = []
+    all_fixtures = {}
+    all_fixtures["errors"] = []
+    all_fixtures["info"] = []
+    # all_fixtures["FIXTURES"] = []
+    # all_fixtures["premier"] = []
 
-    GETTT = "/fixtures?league=39&season=2021"
+    fixtures_premier_league = "/fixtures?league=41&season=2021"
+    fixtures_leauge_one = "/fixtures?league=39&season=2021"
 
-    process_api_data(GETTT)
+    all_fixtures["FIXTURES"] = process_api_data(fixtures_premier_league) + process_api_data(fixtures_leauge_one)
+
+    # all_fixtures["league_one"] = []
+    
+    # all_fixtures["league_one"] = process_api_data(fixtures_leauge_one)
+
+    # all_fixtures["FIXTURES"] =  all_fixtures["league_one"] +  all_fixtures["premier"]
+    
+    try:
+        number_of_fixtures = 0
+        number_of_fixtures = len(all_fixtures["FIXTURES"])
+        mongo_collection.insert_many(all_fixtures["FIXTURES"])
+        all_fixtures["info"].append({"numberOfFixtures": number_of_fixtures})
+    except Exception as e:
+        number_of_errors = number_of_errors + 1
+        track = traceback.format_exc()
+        all_fixtures["errors"].append({"errortype": str(e) + str(track), "numErrors": number_of_errors})
+        all_fixtures["FIXTURES"] =  all_fixtures["league_one"] +  all_fixtures["premier"] + all_fixtures["errors"]
+
+
+
+    parsed_json_i_want = json.dumps(all_fixtures, cls=DatetimeEncoder)
+
+    now = datetime.now()
+    now_str = now.strftime("%d-%m-%YT%H:%M:%S")
+    output_filename = "bbet_fixtures__"+ now_str + "__.json"
+    
+    container_client = ContainerClient.from_connection_string(blobconnection, blobcontainer)
+    blob_client = container_client.get_blob_client(output_filename)
+    
+    
+    # TODO: try except this
+    blob_client.upload_blob(parsed_json_i_want, overwrite=True)
