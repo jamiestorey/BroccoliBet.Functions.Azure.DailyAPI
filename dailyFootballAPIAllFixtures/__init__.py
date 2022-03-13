@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 import http.client
 import json
 import bson
@@ -12,6 +13,7 @@ import pymongo
 global json_i_want
 global fixtures_list
 global all_fixtures
+global number_of_erros
 
 # https://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable/
 class DatetimeEncoder(json.JSONEncoder):
@@ -143,7 +145,6 @@ def process_api_data(data):
                 'fixture_team_away_is_winner': fixture_team_away_is_winner,
             })
 
-    
     return json_i_want['FIXTURES']
     # mongo_client = pymongo.MongoClient(mongoconnection)
     # latest_string = "latest__" + str(fixture_league_id)
@@ -160,6 +161,7 @@ def process_api_data(data):
     
 
 def main(mytimer: func.TimerRequest):
+    number_of_errors = 0
     blobcontainer = os.getenv('blobcontainer')
     blobconnection = os.getenv('blobconnection')
     mongoconnection = os.getenv('mongoconnection')
@@ -173,31 +175,44 @@ def main(mytimer: func.TimerRequest):
     # json_i_want = {}
     # json_i_want["FIXTURES"] = []
     all_fixtures = {}
-    all_fixtures["FIXTURES"] = []
-    all_fixtures["premier"] = []
+    all_fixtures["errors"] = []
+    all_fixtures["info"] = []
+    # all_fixtures["FIXTURES"] = []
+    # all_fixtures["premier"] = []
 
     fixtures_premier_league = "/fixtures?league=41&season=2021"
-    all_fixtures["premier"] = process_api_data(fixtures_premier_league)
-
-    all_fixtures["league_one"] = []
     fixtures_leauge_one = "/fixtures?league=39&season=2021"
-    all_fixtures["league_one"] = process_api_data(fixtures_leauge_one)
 
-    all_fixtures["FIXTURES"] =  all_fixtures["league_one"] +  all_fixtures["premier"]
+    all_fixtures["FIXTURES"] = process_api_data(fixtures_premier_league) + process_api_data(fixtures_leauge_one)
+
+    # all_fixtures["league_one"] = []
+    
+    # all_fixtures["league_one"] = process_api_data(fixtures_leauge_one)
+
+    # all_fixtures["FIXTURES"] =  all_fixtures["league_one"] +  all_fixtures["premier"]
     
     try:
+        number_of_fixtures = 0
+        number_of_fixtures = len(all_fixtures["FIXTURES"])
         mongo_collection.insert_many(all_fixtures["FIXTURES"])
-    except:
-        #  do nothing ha
-        pass
+        all_fixtures["info"].append({"numberOfFixtures": number_of_fixtures})
+    except Exception as e:
+        number_of_errors = number_of_errors + 1
+        track = traceback.format_exc()
+        all_fixtures["errors"].append({"errortype": str(e) + str(track), "numErrors": number_of_errors})
+        all_fixtures["FIXTURES"] =  all_fixtures["league_one"] +  all_fixtures["premier"] + all_fixtures["errors"]
 
 
 
     parsed_json_i_want = json.dumps(all_fixtures, cls=DatetimeEncoder)
 
-    output_filename = "test_two"+ ".json"
+    now = datetime.now()
+    now_str = now.strftime("%d-%m-%YT%H:%M:%S")
+    output_filename = "bbet_fixtures__"+ now_str + "__.json"
     
     container_client = ContainerClient.from_connection_string(blobconnection, blobcontainer)
     blob_client = container_client.get_blob_client(output_filename)
     
+    
+    # TODO: try except this
     blob_client.upload_blob(parsed_json_i_want, overwrite=True)
