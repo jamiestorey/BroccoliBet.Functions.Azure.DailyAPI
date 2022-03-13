@@ -128,7 +128,7 @@ def process_api_data(data):
                 # 'fixture_timezone': fixture_timezone,
                 'fixture_status': fixture_status,
                 'fixture_league_id': fixture_league_id,
-                "fixture_season": fixture_season,
+                'fixture_season': fixture_season,
                 'fixture_round': fixture_round,
                 'fixture_team_home_id': fixture_team_home_id,
                 'fixture_team_away_id': fixture_team_away_id,
